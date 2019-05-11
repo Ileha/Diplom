@@ -66,16 +66,17 @@ namespace MyWebSocket.RR
 		protected override void OnMessage(string message)
 		{
 			Guid id = Guid.Parse(message.Substring(0, 36));
-            TaskCompletionSource<string> awaiter;
-            if (waitRequests.TryRemove(id, out awaiter)) {
-                awaiter.SetResult(message.Substring(36));
-			}
-			else {
-                if (messageHandler != null)
-                {
-                    messageHandler(message.Substring(36), new RRClientWrapper(this, id, base.SendMessage));
+            
+            if (messageHandler != null) {
+                messageHandler(message.Substring(36), new RRClientWrapper(this, id, base.SendMessage));
+            }
+            else {
+                TaskCompletionSource<string> awaiter;
+                if (waitRequests.TryRemove(id, out awaiter)) {
+                    awaiter.SetResult(message.Substring(36));
                 }
-			}
+            }
+
 		}
 
 		protected override void OnOpen() {}

@@ -1,5 +1,6 @@
 ﻿using System;
 using MyWebSocket.RR;
+using System.Threading;
 
 namespace WSTest
 {
@@ -21,16 +22,19 @@ namespace WSTest
             testWS();
 
             //RRClient[] clients = new RRClient[Convert.ToInt32(args[0])];
+            //int messageCount = Convert.ToInt32(args[1]);
+            //int delay = Convert.ToInt32(args[2]);
 
             //for (int i = 0; i < clients.Length; i++)
             //{
-            //    clients[i] = new RRClient("ws://10.0.1.9:20001");
+            //    clients[i] = new RRClient("ws://10.0.1.2:20001");
             //}
 
-            //for (int i = 0; i < Convert.ToInt32(args[1]); i++)
+            //for (int i = 0; i < messageCount; i++)
             //{
             //    int index = i % clients.Length;
             //    openWS(clients[index], String.Format("hello server from connect {0}\t message {1}", index, i));
+            //    Thread.Sleep(delay);
             //}
 
             //Console.ReadLine();

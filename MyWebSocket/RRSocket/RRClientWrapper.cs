@@ -55,7 +55,7 @@ namespace MyWebSocket.RR
 		}
 
 		public Task<string> SendMessageAsync(string message) {
-			if (just_sent) { /* TODO exception */ }
+            if (just_sent) { throw new Exception("just used"); /* TODO exception */ }
 			just_sent = true;
 			TaskCompletionSource<string> tcs = new TaskCompletionSource<string>();
 			tcs.SetResult("");

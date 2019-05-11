@@ -34,8 +34,7 @@ FIN: 1 бит
 0x8 обозначает закрытие соединения этим фреймом.
 0x9 обозначает PING.
 0xA обозначает PONG.
-0xB обозначает открытие соединения !!!
-0xC-F зарезервированы для будущих управляющих фреймов.
+0xB-F зарезервированы для будущих управляющих фреймов.
 0x0 обозначает фрейм-продолжение для фрагментированного сообщения. Он интерпретируется, исходя из ближайшего предыдущего ненулевого типа.
 
 */
@@ -76,8 +75,8 @@ namespace MyWebSocket
 
         private static Action<int, WebSocket>[] opcodeReact = new Action<int, WebSocket>[12];
 
-		private TcpClient _client;
-		private NetworkStream stream;
+		private TcpClient client;
+        private NetworkStream stream { get { return client.GetStream(); } }
 		private object writeLocker = new object();
         private Thread task;
 
@@ -122,26 +121,25 @@ namespace MyWebSocket
 				} while (lenght > 0);
                 
 				ThreadPool.QueueUserWorkItem((state) => {
-					WS.OnMessage(sb.ToString());
+                    WS.OnMessage(sb.ToString());
 				});
 			};
 			opcodeReact[8] = (fin, WS) => {//приём сообщения о закрытии соединения
                 //Console.WriteLine("closed message");
                 WS.task.Abort();
-                WS.stream.Close();
 			};
 		}
 
 		public WebSocket(string url) : base(url)
 		{
-			_client = new TcpClient();
-			_client.Connect(address, port);
-			create(_client);
+			client = new TcpClient();
+			client.Connect(address, port);
+			create();
 		}
 		internal WebSocket(TcpClient client, bool encryption) : base(client, encryption)
 		{
-			_client = client;
-			create(client);
+			this.client = client;
+			create();
 		}
 
 		public virtual void SendMessage(String message) {//отправка текстового сообщения
@@ -181,11 +179,10 @@ namespace MyWebSocket
 			{
 				obj.Write(buffer, 0, 1);
                 task.Abort();
-                _client.Close();
 			});
 		}
 		public bool IsClosed() {
-			return !_client.Connected;
+			return !client.Connected;
 		}
 
 		/*
@@ -219,8 +216,7 @@ namespace MyWebSocket
 			}
 		}
 
-		private void create(TcpClient client) {
-			stream = client.GetStream();
+		private void create() {
 			OnOpen();
 
             task = new Thread(() =>
@@ -228,24 +224,27 @@ namespace MyWebSocket
 				byte[] data = new byte[1];
                 int count;
                 try {
-                    while ((count = stream.Read(data, 0, 1)) > 0)
-                    {//код принимающий данные из сети и решающий кто их будет обрабатывать зависит от опкода
-                        int fin = (data[0] & FIN_MASK) >> 7;
-                        int opcode = data[0] & OPCODE_MASK;
-                        //Console.WriteLine("first: {0}", data[0]);
-                        opcodeReact[opcode](fin, this);
+                    using (client) {
+                        while ((count = stream.Read(data, 0, 1)) > 0)
+                        {//код принимающий данные из сети и решающий кто их будет обрабатывать зависит от опкода
+                            int fin = (data[0] & FIN_MASK) >> 7;
+                            int opcode = data[0] & OPCODE_MASK;
+                            //Console.WriteLine("first: {0}", data[0]);
+                            opcodeReact[opcode](fin, this);
+                        }
                     }
                 }
-                catch (ThreadAbortException abrot) {}
+                catch (ThreadAbortException abrot) {
+                    Console.WriteLine("abrot");
+                }
                 catch (Exception err)
                 {
                     OnError(err);
                 }
 				finally {
-                    //Console.WriteLine("finally");
-					if (client.Connected) {
-						client.Close();
-					}
+                    //if (client.Connected) {
+                    //    client.Close();
+                    //}
 					OnClose();
 				}
 			});
