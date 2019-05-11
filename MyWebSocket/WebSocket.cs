@@ -64,74 +64,71 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Text;
 using System.Collections.Generic;
+using System.IO;
 
 namespace MyWebSocket
 {
 	public abstract class WebSocket : Connect
 	{
+        private const byte FIN_MASK = 0x80;
+        private const byte OPCODE_MASK = 0x0F;
+        private const byte START_LENGHT = 0x7F;
+
+        private static Action<int, WebSocket>[] opcodeReact = new Action<int, WebSocket>[12];
+
 		private TcpClient _client;
 		private NetworkStream stream;
-		private object locker = new object();
-
-		private static Action<int, NetworkStream, WebSocket>[] opcodeReact = new Action<int, NetworkStream, WebSocket>[12];
-		private readonly static byte finMask = 0x80;
-		private readonly static byte opcodeMask = 0x0F;
-		private readonly static byte smallLenght = 0x7F;
+		private object writeLocker = new object();
+        private Thread task;
 
 		static WebSocket()
 		{
-			opcodeReact[1] = (fin, stream, WS) =>
+			opcodeReact[1] = (fin, WS) =>
 			{//приём текстового сообщения
-				byte[] second = new byte[1];
-				stream.Read(second, 0, 1);
-				int is_mask = (second[0] & finMask) >> 7;
-				UInt64 lenght = (UInt64)(second[0] & smallLenght);
-				byte[] buffer = null;
-				byte[] mask = null;
+                //Console.WriteLine("text message");
+                UInt64 lenght = 0;
+                byte[] buffer = null;
+                byte[] mask = null;
 
-				if (lenght == 126)
-				{
-					byte[] lenght2 = new byte[2];
-					stream.Read(lenght2, 0, 2);
-					lenght = BitConverter.ToUInt16(lenght2, 0);
-					buffer = new byte[1024];
-				}
-				else if (lenght == 127)
-				{
-					byte[] lenght8 = new byte[8];
-					stream.Read(lenght8, 0, 8);
-					lenght = BitConverter.ToUInt64(lenght8, 0);
-					buffer = new byte[2048];
-				}
-				else
-				{
-					buffer = new byte[lenght];
-				}
+                BinaryReader reader = new BinaryReader(WS.stream);
+                byte second = reader.ReadByte();
 
-				if (is_mask == 1)
-				{
-					mask = new byte[4];
-					stream.Read(mask, 0, 4);
-				}
+                int is_mask = (second & FIN_MASK) >> 7;
+                lenght = (UInt64)(second & START_LENGHT);
 
+                if (lenght == 126) {
+                    lenght = reader.ReadUInt16();
+                    buffer = new byte[1024];
+                }
+                else if (lenght == 127) {
+                    lenght = reader.ReadUInt64();
+                    buffer = new byte[2048];
+                }
+                else {
+                    buffer = new byte[lenght];
+                }
+
+                if (is_mask == 1) {
+                    mask = reader.ReadBytes(4);
+                }
+                
 
 				StringBuilder sb = new StringBuilder();
 				do
 				{
-					int count = stream.Read(buffer, 0, buffer.Length);
+					int count = WS.stream.Read(buffer, 0, buffer.Length);
 					sb.Append(Encoding.UTF8.GetString(buffer, 0, count));
 					lenght -= (ulong)count;
 				} while (lenght > 0);
-
-				ThreadPool.QueueUserWorkItem((state) =>
-				{
-					//if (WS._observer == null) { return; }
-					//WS._observer.OnMessage(sb.ToString());
+                
+				ThreadPool.QueueUserWorkItem((state) => {
 					WS.OnMessage(sb.ToString());
 				});
 			};
-			opcodeReact[8] = (fin, stream, WS) => {//приём сообщения о закрытии соединения
-				WS._client.Close();
+			opcodeReact[8] = (fin, WS) => {//приём сообщения о закрытии соединения
+                //Console.WriteLine("closed message");
+                WS.task.Abort();
+                WS.stream.Close();
 			};
 		}
 
@@ -147,38 +144,34 @@ namespace MyWebSocket
 			create(client);
 		}
 
-		public virtual void SendMessage(String message)
-		{//отправка текстового сообщения
-			List<byte> two_byte = new List<byte>();
-			two_byte.Add(0x81);
-			byte[] buffer = Encoding.UTF8.GetBytes(message);
-			if (buffer.Length >= 126)
-			{
-				if (buffer.Length <= UInt16.MaxValue)
-				{
-					two_byte.Add((byte)(0x7E | mask));
-					UInt16 count = Convert.ToUInt16(buffer.Length);
-					byte[] count_res = BitConverter.GetBytes(count);
-					two_byte.AddRange(count_res);
-				}
-				else
-				{
-					two_byte.Add((byte)(0x7F | mask));
-					UInt64 count = Convert.ToUInt64(buffer.Length);
-					byte[] count_res = BitConverter.GetBytes(count);
-					two_byte.AddRange(count_res);
-				}
-			}
-			else
-			{
-				two_byte.Add((byte)(Convert.ToByte(buffer.Length) | mask));
-			}
+		public virtual void SendMessage(String message) {//отправка текстового сообщения
+            MemoryStream header = new MemoryStream(2);
+            byte[] buffer = Encoding.UTF8.GetBytes(message);
+            using (BinaryWriter writer = new BinaryWriter(header)) {
+                writer.Write((byte)0x81);
+                if (buffer.Length >= 126) {
+                    if (buffer.Length <= UInt16.MaxValue) {
+                        writer.Write((byte)(0x7E | mask));
+                        UInt16 count = Convert.ToUInt16(buffer.Length);
+                        writer.Write(count);
+                    }
+                    else {
+                        writer.Write((byte)(0x7F | mask));
+                        UInt64 count = Convert.ToUInt64(buffer.Length);
+                        writer.Write(count);
+                    }
+                }
+                else {
+                    writer.Write((byte)(Convert.ToByte(buffer.Length) | mask));
+                }
 
-			WriteToBufferAtomic((stream) =>
-			{
-				stream.Write(two_byte.ToArray(), 0, two_byte.Count);
-				stream.Write(buffer, 0, buffer.Length);
-			});
+                header.Seek(0, SeekOrigin.Begin);
+
+                WriteToBufferAtomic((stream) => {
+                    header.CopyTo(stream, (int)header.Length);
+                    stream.Write(buffer, 0, buffer.Length);
+                });
+            }
 		}
 
 		public void Close()
@@ -187,6 +180,8 @@ namespace MyWebSocket
 			WriteToBufferAtomic((NetworkStream obj) =>
 			{
 				obj.Write(buffer, 0, 1);
+                task.Abort();
+                _client.Close();
 			});
 		}
 		public bool IsClosed() {
@@ -205,7 +200,7 @@ namespace MyWebSocket
 		* атомарная операция записи в сеть
 		*/
 		private void WriteToBufferAtomic(Action<NetworkStream> operations) {
-			lock (locker) {
+			lock (writeLocker) {
 				operations(stream);
 			}
 		}
@@ -228,32 +223,33 @@ namespace MyWebSocket
 			stream = client.GetStream();
 			OnOpen();
 
-			ThreadPool.QueueUserWorkItem((state) => {
+            task = new Thread(() =>
+            {
 				byte[] data = new byte[1];
-				try
-				{
-					while (true)
-					{//код принимающий данные из сети и решающий кто их будет обрабатывать зависит от опкода
-						if (!stream.CanRead) { break; }
-						int count = stream.Read(data, 0, 1);
-						if (count == 0) { break; }
-						int fin = (data[0] & finMask) >> 7;
-						int opcode = data[0] & opcodeMask;
-						opcodeReact[opcode](fin, stream, this);
-					}
-				}
-				catch (ThreadAbortException err) {}
-				catch (Exception err)
-				{
-					OnError(err);
-				}
+                int count;
+                try {
+                    while ((count = stream.Read(data, 0, 1)) > 0)
+                    {//код принимающий данные из сети и решающий кто их будет обрабатывать зависит от опкода
+                        int fin = (data[0] & FIN_MASK) >> 7;
+                        int opcode = data[0] & OPCODE_MASK;
+                        //Console.WriteLine("first: {0}", data[0]);
+                        opcodeReact[opcode](fin, this);
+                    }
+                }
+                catch (ThreadAbortException abrot) {}
+                catch (Exception err)
+                {
+                    OnError(err);
+                }
 				finally {
+                    //Console.WriteLine("finally");
 					if (client.Connected) {
 						client.Close();
 					}
 					OnClose();
 				}
 			});
+            task.Start();
 		}
 	}
 }

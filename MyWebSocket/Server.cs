@@ -27,7 +27,7 @@ namespace MyWebSocket
 
 		protected abstract void OnClose();
 		protected abstract void OnError(Exception err);
-		protected abstract WebSocket OnOpen(TcpClient client);
+		protected abstract void OnOpen(TcpClient client);
 
 		private void OnConnectHandler() {
 			try
@@ -37,7 +37,7 @@ namespace MyWebSocket
 				while (true)
 				{
 					TcpClient client = listener.AcceptTcpClient();
-					WebSocket WSClient = OnOpen(client);
+					OnOpen(client);
 				}
 			}
 			catch (ThreadAbortException abrot) {}

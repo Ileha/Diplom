@@ -2,6 +2,7 @@
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace MyWebSocket.RR
 {
@@ -12,7 +13,7 @@ namespace MyWebSocket.RR
 	{
 		private Action<IRRClient> observer;
 		private Action<string, IRRClient> messageHandler;
-		private Dictionary<Guid, TaskCompletionSource<string>> waitRequests = new Dictionary<Guid, TaskCompletionSource<string>>();
+        private ConcurrentDictionary<Guid, TaskCompletionSource<string>> waitRequests = new ConcurrentDictionary<Guid, TaskCompletionSource<string>>();
 
 		public RRClient(string url) : base(url) {
 			//messageHandler = null;
@@ -39,7 +40,7 @@ namespace MyWebSocket.RR
 		{
 			TaskCompletionSource<string> tcs = new TaskCompletionSource<string>();
 			Guid id = Guid.NewGuid();
-			waitRequests.Add(id, tcs);
+			waitRequests.TryAdd(id, tcs);
 			base.SendMessage(id.ToString() + message);
             return tcs.Task;
 		}
@@ -65,14 +66,15 @@ namespace MyWebSocket.RR
 		protected override void OnMessage(string message)
 		{
 			Guid id = Guid.Parse(message.Substring(0, 36));
-			if (waitRequests.ContainsKey(id)) {
-				waitRequests[id].SetResult(message.Substring(36));
-                waitRequests.Remove(id);
+            TaskCompletionSource<string> awaiter;
+            if (waitRequests.TryRemove(id, out awaiter)) {
+                awaiter.SetResult(message.Substring(36));
 			}
 			else {
-				if (messageHandler != null) {
-					messageHandler(message.Substring(36), new RRClientWrapper(this, id, base.SendMessage));
-				}
+                if (messageHandler != null)
+                {
+                    messageHandler(message.Substring(36), new RRClientWrapper(this, id, base.SendMessage));
+                }
 			}
 		}
 

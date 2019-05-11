@@ -16,11 +16,10 @@ namespace MyWebSocket.RR
 			this.onConnect = onConnect;
 		}
 
-		protected override WebSocket OnOpen(TcpClient client)
+        protected override void OnOpen(TcpClient client)
 		{
 			RRClient rRClient = new RRClient(client, isEncrypt, messageHandler);
 			onConnect(rRClient);
-			return rRClient;
 		}
 
 		protected override void OnClose() {

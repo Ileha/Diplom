@@ -1,42 +1,67 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using MyWebSocket.RR;
-using JSONParserLibrary;
 
 namespace WSTest
 {
     class test
     {
+
+        static int count = 0;
+        static object locker = new object();
+        static void add()
+        {
+            lock (locker)
+            {
+                count++;
+            }
+        }
+
         static void Main(string[] args)
         {
-            testJsonParser();
-            //testWS();
-            Console.ReadKey();
+            testWS();
+
+            //RRClient[] clients = new RRClient[Convert.ToInt32(args[0])];
+
+            //for (int i = 0; i < clients.Length; i++)
+            //{
+            //    clients[i] = new RRClient("ws://10.0.1.9:20001");
+            //}
+
+            //for (int i = 0; i < Convert.ToInt32(args[1]); i++)
+            //{
+            //    int index = i % clients.Length;
+            //    openWS(clients[index], String.Format("hello server from connect {0}\t message {1}", index, i));
+            //}
+
+            //Console.ReadLine();
+            //Console.WriteLine(count);
+
+            //for (int i = 0; i < clients.Length; i++)
+            //{
+            //    clients[i].Close();
+            //}
         }
 
-        public static void testJsonParser() {
-            JSONParser pars = new JSONParser("{\"cmd\": \"ajsdfj\", \"data\":{\"c\":234.56}}");
-            Console.WriteLine(pars["data.c"].GetValue<float>());
-        }
-
-        public static async void testWS() {
+        public static void testWS() {
             RRServer server = new RRServer("ws://0.0.0.0:20001", (string arg1, IRRClient arg2) =>
             {
                 Console.WriteLine("server {0}", arg1);
-                arg2.SendMessageAsync("hello client");
-                arg2.Close();
+                arg2.SendMessageAsync(arg1);
+                //arg2.Close();
             }, (IRRClient obj) =>
             {
                 Console.WriteLine("connected ip: {0}, port {1}", obj.address, obj.port);
             });
 
-            RRClient client = new RRClient("ws://127.0.0.1:20001");
-            Console.WriteLine("closed {0}", client.IsClosed());
-            string res = await client.SendMessageAsync("hello server");
-            Console.WriteLine("client {0} is closed {1}", res, client.IsClosed());
+            
+        }
+
+        public static async void openWS(RRClient client, string data)
+        {
+
+            string res = await client.SendMessageAsync(data);
+            Console.WriteLine("client {0}", res);
+            add();
             //client.Close();
         }
     }
