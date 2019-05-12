@@ -31,6 +31,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RawWs\RawServer.cs" />
+    <Compile Include="RawWs\RawSocket.cs" />
     <Compile Include="RRSocket\RRClient.cs" />
     <Compile Include="RRSocket\RRServer.cs" />
     <Compile Include="Connect.cs" />

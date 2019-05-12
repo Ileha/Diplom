@@ -40,9 +40,14 @@ namespace MyWebSocket.RR
 		{
 			TaskCompletionSource<string> tcs = new TaskCompletionSource<string>();
 			Guid id = Guid.NewGuid();
-			waitRequests.TryAdd(id, tcs);
-			base.SendMessage(id.ToString() + message);
-            return tcs.Task;
+            if (waitRequests.TryAdd(id, tcs))
+            {
+                base.SendMessage(id.ToString() + message);
+                return tcs.Task;
+            }
+            else {
+                throw new Exception("can't add guid");
+            }
 		}
 
 		protected override void OnClose() {
@@ -74,6 +79,9 @@ namespace MyWebSocket.RR
                 TaskCompletionSource<string> awaiter;
                 if (waitRequests.TryRemove(id, out awaiter)) {
                     awaiter.SetResult(message.Substring(36));
+                }
+                else {
+                    Console.WriteLine("missed guid");
                 }
             }
 

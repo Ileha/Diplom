@@ -126,6 +126,7 @@ namespace MyWebSocket
 			};
 			opcodeReact[8] = (fin, WS) => {//приём сообщения о закрытии соединения
                 //Console.WriteLine("closed message");
+                WS.client.Close();
                 WS.task.Abort();
 			};
 		}
@@ -178,6 +179,7 @@ namespace MyWebSocket
 			WriteToBufferAtomic((NetworkStream obj) =>
 			{
 				obj.Write(buffer, 0, 1);
+                client.Close();
                 task.Abort();
 			});
 		}
@@ -224,14 +226,12 @@ namespace MyWebSocket
 				byte[] data = new byte[1];
                 int count;
                 try {
-                    using (client) {
-                        while ((count = stream.Read(data, 0, 1)) > 0)
-                        {//код принимающий данные из сети и решающий кто их будет обрабатывать зависит от опкода
-                            int fin = (data[0] & FIN_MASK) >> 7;
-                            int opcode = data[0] & OPCODE_MASK;
-                            //Console.WriteLine("first: {0}", data[0]);
-                            opcodeReact[opcode](fin, this);
-                        }
+                    while ((count = stream.Read(data, 0, 1)) > 0)
+                    {//код принимающий данные из сети и решающий кто их будет обрабатывать зависит от опкода
+                        int fin = (data[0] & FIN_MASK) >> 7;
+                        int opcode = data[0] & OPCODE_MASK;
+                        //Console.WriteLine("first: {0}", data[0]);
+                        opcodeReact[opcode](fin, this);
                     }
                 }
                 catch (ThreadAbortException abrot) {
@@ -242,9 +242,9 @@ namespace MyWebSocket
                     OnError(err);
                 }
 				finally {
-                    //if (client.Connected) {
-                    //    client.Close();
-                    //}
+                    if (client.Connected) {
+                        client.Close();
+                    }
 					OnClose();
 				}
 			});
