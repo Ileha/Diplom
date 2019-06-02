@@ -39,12 +39,13 @@ namespace MyWebSocket.RawWs
         }
 
         public RawSocket(string url) : base(url) {
-			
+            Start();
 		}
         internal RawSocket(TcpClient client, bool encryption, RawServer server)
             : base(client, encryption)
         {
             this.server = server;
+            Start();
 		}
 
         protected override void OnMessage(string message)

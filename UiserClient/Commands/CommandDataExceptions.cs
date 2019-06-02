@@ -1,6 +1,11 @@
 ﻿using System;
-namespace UiserClient
+namespace UiserClient.Commands
 {
+    public class KeyNotFoundException : Exception
+    {
+        public KeyNotFoundException(char key) : base(String.Format("not found {0}", key))
+        {}
+    }
 	public class EmptyKeyException : Exception {
 		public EmptyKeyException() {
 		

@@ -16,6 +16,7 @@ namespace MyWebSocket.RR
 		void Close();
 
 		Task<string> SendMessageAsync(string message);
-		void AddOnCloseObserver(Action<IRRClient> observer);
+        event IRREvent onClose;
+        event error onError;
 	}
 }

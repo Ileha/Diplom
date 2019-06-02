@@ -1,54 +1,69 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="FullSignature">
-  <Class Name="MyWebSocket.Connect" Collapsed="true">
-    <Position X="3.75" Y="0.5" Width="2" />
+  <Class Name="MyWebSocket.Connect">
+    <Position X="1.5" Y="0.5" Width="2" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAQAgAAEQAAAAQAAIBAAgAAAAAAEAAAAA=</HashCode>
       <FileName>Connect.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="MyWebSocket.Server" Collapsed="true">
-    <Position X="2.75" Y="1.75" Width="1.5" />
+  <Class Name="MyWebSocket.Server">
+    <Position X="0.5" Y="3.75" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
     <TypeIdentifier>
       <HashCode>AAAAAAEAACCAAAAAAAAAAAAAIIAAAAAAAAIAAADAAAA=</HashCode>
       <FileName>Server.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
-  <Class Name="MyWebSocket.WebSocket" Collapsed="true">
-    <Position X="5" Y="1.75" Width="1.5" />
+  <Class Name="MyWebSocket.WebSocket">
+    <Position X="2.75" Y="3.75" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
     <TypeIdentifier>
-      <HashCode>AAAAAAEAAICQAEAAICAQAAAAAAAAAEgACALAAADAgAA=</HashCode>
+      <HashCode>AAAAAAEAAKCQAAAAICASAAAAAAAAAEgICAKABADAgAA=</HashCode>
       <FileName>WebSocket.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="MyWebSocket.RR.RRClient" Collapsed="true">
-    <Position X="5" Y="3.25" Width="1.5" />
+  <Class Name="MyWebSocket.RR.RRClient">
+    <Position X="2.75" Y="8.75" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
     <TypeIdentifier>
-      <HashCode>AQAMAAEAgACAAAAAACABAAAAAAAAAAAAAAKAAAAAAAA=</HashCode>
+      <HashCode>AQAAAIEAgACAAAAAACAAAAAAAAAAAAAAAAKAAAACAAI=</HashCode>
       <FileName>RRSocket\RRClient.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
-  <Class Name="MyWebSocket.RR.RRClientWrapper" Collapsed="true">
-    <Position X="7.5" Y="0.5" Width="1.5" />
+  <Class Name="MyWebSocket.RR.RRClientWrapper">
+    <Position X="5.25" Y="0.5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
     <TypeIdentifier>
-      <HashCode>AQAEBAAAACAAQAAAACAAAAAwAAIAAEgAAAAAAACAAgA=</HashCode>
+      <HashCode>AQAABIAAACAAQAAAACAAAAAwAAIAAEgAAAAAAACCAgA=</HashCode>
       <FileName>RRSocket\RRClientWrapper.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
   </Class>
-  <Class Name="MyWebSocket.RR.RRServer" Collapsed="true">
-    <Position X="2.75" Y="3.25" Width="1.5" />
+  <Class Name="MyWebSocket.RR.RRServer">
+    <Position X="0.5" Y="7.25" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAEAAACAAAAAAAABAAAAAAAAAAAABAIAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAEAAACBAAAAAAAAAAAAAAAAAAACAAKAAAACgAA=</HashCode>
       <FileName>RRSocket\RRServer.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Interface Name="MyWebSocket.RR.IRRClient" Collapsed="true">
-    <Position X="7.5" Y="1.75" Width="1.5" />
+  <Interface Name="MyWebSocket.RR.IRRClient">
+    <Position X="5.25" Y="4.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AQAEAAAAAAAAQAAAACAAAAAQAAIAAEgAAAAAAACAAAA=</HashCode>
+      <HashCode>AQAAAIAAAAAAQAAAACAAAAAQAAIAAEgAAAAAAACCAAA=</HashCode>
       <FileName>RRSocket\IRRClient.cs</FileName>
     </TypeIdentifier>
   </Interface>

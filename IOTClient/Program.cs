@@ -8,13 +8,14 @@ using System.Net.Sockets;
 using System.Text;
 using MyRandom;
 using System.IO;
+using IOTClient.Commands;
 
 namespace IOTClient
 {
 	class MainClass
 	{
+        public const ushort UDP_STATISTICS_SERVER_PORT = 20043;
 		const ushort BROADCAST_UDP_SENDER_PORT = 20042;
-		const ushort UDP_STATISTICS_SERVER_PORT = 20043;
 		const string CONFIG_PATH = "./config.json";
 
 		private static Dictionary<IPEndPoint, UInt32> knownServers = new Dictionary<IPEndPoint, uint>();
@@ -52,34 +53,27 @@ namespace IOTClient
 		*/
 		private static CommandArray<ClientData> ConfigureCommands() {
 			CommandArray<ClientData> res = new CommandArray<ClientData>();
-			//requ	{data: {"data_count": 1000}
 			res.AddCommand((c) => {
+                ICommand cmd = new CommandStress();
 				c.Name = "stress";
 				c.Execute = (ClientData[] arguments) => {
-					ClientData arg = arguments[0];
-					int count = arg.data["data_count"].GetValue<int>();
-					Console.WriteLine(count);
-
-					uint sessionID = MyRandom.MyRandom.GetRandomUInt32();
-					IPEndPoint server = new IPEndPoint(arg.client.address, UDP_STATISTICS_SERVER_PORT);
-					UdpClient Client = new UdpClient();
-					MemoryStream sendData = new MemoryStream(new byte[512]);
-
-					using (BinaryWriter writer = new BinaryWriter(sendData)) {
-						writer.Write(sessionID);
-					}
-					byte[] data = sendData.ToArray();
-
-					for (int i = 0; i < count; i++) {
-						Client.Send(data, data.Length, server);
-					}
-
-					arg.client.SendMessageAsync(new PartStruct()
-					                            .Add("ok", new PartStruct()
-					                                 .Add("session_id", sessionID)).ToJSON());
-                    arg.client.Close();
+                    cmd.Execute(arguments[0]);
 				};
 			});
+            res.AddCommand((c) => {
+                ICommand cmd = new CommandLoad();
+                c.Name = "load";
+                c.Execute = (ClientData[] arguments) => {
+                    cmd.Execute(arguments[0]);
+                };
+            });
+            res.AddCommand((c) => {
+                ICommand cmd = new CommandPerformance();
+                c.Name = "performance";
+                c.Execute = (ClientData[] arguments) => {
+                    cmd.Execute(arguments[0]);
+                };
+            });
 
 			return res;
 		}
@@ -106,7 +100,9 @@ namespace IOTClient
 			//requ	{cmd, data: {}}
 			//resp	{ok: {message}}
 			//error	{error: {message}}
-			return new RRServer(String.Format("ws://0.0.0.0:{0}", config["serverPort"].GetValue<UInt16>()), (string arg1, IRRClient arg2) => {
+
+			RRServer server = new RRServer(String.Format("ws://0.0.0.0:{0}", config["serverPort"].GetValue<UInt16>()));
+            server.onMessage += (string arg1, IRRClient arg2) => {
 				JSONParser inputData = null;
 				try {
 					inputData = new JSONParser(arg1);
@@ -115,11 +111,12 @@ namespace IOTClient
 					arg2.SendMessageAsync("{\"error\": {\"message\": \"bad JSON data\"}}");
 					return;
 				}
+                Console.WriteLine(inputData.ToJSON());
 
 				commands.Execute(inputData["cmd"].GetValue<string>(), new ClientData(arg2, new JSONParser(inputData["data"])));
-			}, (IRRClient obj) => {
-				
-			});
+			};
+
+            return server;
 		}
 
 		/*
@@ -128,17 +125,19 @@ namespace IOTClient
 		static FlagReceiver ConfigureReceiver() {
 			return new FlagReceiver(BROADCAST_UDP_SENDER_PORT, async (IPEndPoint arg1, byte[] arg2) => {
 				UInt32 id = BitConverter.ToUInt32(arg2, 2);
-				if (knownServers.ContainsKey(arg1)) {
-					if (knownServers[arg1] == id) {
-						return;
-					}
-					else {
-						knownServers[arg1] = id;
-					}
-				}
-				else {
-					knownServers.Add(arg1, id);
-				}
+                lock (knownServers) {
+                    if (knownServers.ContainsKey(arg1)) {
+                        if (knownServers[arg1] == id) {
+                            return;
+                        }
+                        else {
+                            knownServers[arg1] = id;
+                        }
+                    }
+                    else {
+                        knownServers.Add(arg1, id);
+                    }
+                }
 
 				UInt16 port = BitConverter.ToUInt16(arg2, 0);
 				Console.WriteLine("server on {0}:{1} id: {2}", arg1.Address, port, id);
@@ -146,7 +145,6 @@ namespace IOTClient
 				string data = await client.SendMessageAsync(new PartStruct()
 				                              .Add("cmd", "AddClient")
 				                              .Add("data", information).ToJSON());
-				
 				client.Close();
 			});
 		}

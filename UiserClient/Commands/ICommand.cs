@@ -1,5 +1,4 @@
-﻿using IOTServer;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,17 +8,25 @@ using System.Threading.Tasks;
  * абстракция команды выполняемая сервером
  * имеет доступ к данным сервера и запросу
  */
-namespace IOTServer.Commands
+namespace UiserClient.Commands
 {
-    public abstract class IServerCommand
+    public abstract class ICommand
     {
         protected CommonData data { get; private set; }
+        private CommandDataPattern pattern;
 
-        public IServerCommand(CommonData data) {
+        public ICommand(CommonData data, CommandDataPattern pattern)
+        {
+            this.pattern = pattern;
             this.data = data;
         }
 
-        public abstract void Execute(ClientData argument);
+
+        public void Execute(CommandData argument) {
+            argument.SetPattern(pattern);
+            execute(argument);
+        }
+        protected abstract void execute(CommandData argument);
         protected void SetData(CommonData data) {
             this.data = data;
         }

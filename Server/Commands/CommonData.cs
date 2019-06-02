@@ -8,6 +8,9 @@ using IOTServer.StatisticData;
 
 namespace IOTServer.Commands
 {
+    /*
+     * хранит в себе данные о клиентах и статистику
+     */
     public class CommonData
     {
         public StatisticDataBank statisticData { get; private set; }

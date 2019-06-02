@@ -2,7 +2,8 @@
 
 namespace IOTServer.StatisticData
 {
-	public class StatisticElement {
+    public class StatisticElement : IComparable<StatisticElement>
+    {
 		public uint UnixTime { get; private set; }
 		public long BytesCount { get; private set; }
 
@@ -14,5 +15,18 @@ namespace IOTServer.StatisticData
 		public override string ToString() {
 			return string.Format("[StatisticData: UnixTime={0}, BytesCount={1}]", UnixTime, BytesCount);
 		}
-	}
+
+        public int CompareTo(StatisticElement other)
+        {
+            if(UnixTime < other.UnixTime) {
+                return -1;
+            }
+            else if (UnixTime > other.UnixTime) {
+                return 1;
+            }
+            else {
+                return 0;
+            }
+        }
+    }
 }

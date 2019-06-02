@@ -2,7 +2,11 @@
 using JSONParserLibrary;
 using MyWebSocket.RR;
 
-namespace IOTServer {
+namespace IOTServer.Commands {
+
+    /*
+     * данные представляющие собой запрос от клиента и самого клиента которому нужно ответить
+     */
 	public class ClientData
 	{
 		public IRRClient client { get; private set; }

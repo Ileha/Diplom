@@ -3,10 +3,10 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Text;
 
-namespace UiserClient
+namespace UiserClient.Commands
 {
 	public class CommandDataPattern {
-		public static CommandDataPattern EmptyPattern = new CommandDataPattern();
+		public static readonly CommandDataPattern EmptyPattern = new CommandDataPattern();
 
 		public Dictionary<char, bool> options { get; private set; }
 
@@ -100,12 +100,17 @@ namespace UiserClient
 			return keys.ContainsKey(key);
 		}
 
-		public string GetKeyValue(char key) {
-			int index = keys[key];
+		public T GetKeyValue<T>(char key) {
+            int index = 0;
+            try {
+                index = keys[key];
+            }
+            catch (Exception err) {
+                throw new KeyNotFoundException(key);
+            }
 			if (index == -1) { throw new EmptyKeyException(); }
 			string keyData = mergeSplit[index];
-
-			return keyData;
+            return (T)Convert.ChangeType(keyData, typeof(T));
 		}
 
 		public IEnumerable<char> GetKeysArray() {

@@ -17,38 +17,17 @@ namespace IOTServer.Commands
         //{dataCount, clients:[]}
         private IPart TestForSingleIotClient(Client currentClient, string req, uint count)
         {
-            RRClient iotClient = currentClient.getConnect();
-            JSONParser reply = new JSONParser(iotClient.SendMessageAsync(req).Result); //{ok: {session_id}}
-            
-            uint sessionId = reply["ok.session_id"].GetValue<UInt32>();
-            
-            List<StatisticElement> statistic = data.statisticData.Pop(iotClient.address, sessionId);
-            
-            double all = statistic.Count;
-            double all_time = statistic[(int)all - 1].UnixTime - statistic[0].UnixTime;
+            try {
+                RRClient iotClient = currentClient.getConnect();
+                JSONParser reply = new JSONParser(iotClient.SendMessageAsync(req).Result); //{ok: {session_id}}
 
-            double speed = double.PositiveInfinity;
-            if (all_time > 0) {
-                speed = ((all * 512.0d * 8.0d) / all_time) / 1000.0d; //в Мбит/c
-            }
-            double jitter = 0;
-            double delay = double.PositiveInfinity;
-            if (all > 0) {
-                delay = (all_time / all) / 1000; //в секундах
-                for (int i = 1; i < all; i++) {
-                    jitter += Math.Pow((delay - (statistic[i].UnixTime - statistic[i - 1].UnixTime)/1000), 2);
-                }
-                jitter /= all;
-            }
+                uint sessionId = reply["ok.session_id"].GetValue<UInt32>();
 
-            return new PartStruct()
-                .Add("name", currentClient.ToString())
-                .Add("result", new PartStruct()
-                        .Add("jitter", String.Format("{0} c", jitter))
-                        .Add("delay", String.Format("{0} c", delay))
-                        .Add("speed", String.Format("{0} Mbit/c", speed))
-                        .Add("missed", count - all)
-                    );
+                return data.statisticData.GetMetric(currentClient.Address.Address, sessionId, count).GetJsonData();
+            }
+            catch (Exception err) {
+                return new PartStruct().Add("exception", err.Message);
+            }
         }
 
         public override void Execute(ClientData argument) {

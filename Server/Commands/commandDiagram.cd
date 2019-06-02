@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="IOTServer.Commands.IServerCommand">
+    <Position X="3" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAABAAAAAAQAAAAAAAAAAAAAAAAAAAAQAAAAAAA=</HashCode>
+      <FileName>Commands\IServerCommand.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IOTServer.Commands.CommandAddClient" Collapsed="true">
+    <Position X="8.5" Y="3.75" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Commands\Cmd\CommandAddClient.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IOTServer.Commands.CommandClients" Collapsed="true">
+    <Position X="6.75" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Commands\Cmd\CommandClients.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IOTServer.Commands.CommandLoadTest" Collapsed="true">
+    <Position X="0.5" Y="3.75" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAABAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Commands\Cmd\CommandLoadTest.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IOTServer.Commands.CommandPerformance" Collapsed="true">
+    <Position X="2.5" Y="3.75" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAABAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Commands\Cmd\CommandPerformance.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IOTServer.Commands.CommandStressTest" Collapsed="true">
+    <Position X="4.75" Y="3.75" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQAAAAAAAAAAABAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Commands\Cmd\CommandStressTest.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

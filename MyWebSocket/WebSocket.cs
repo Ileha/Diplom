@@ -64,6 +64,7 @@ using System.Threading;
 using System.Text;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace MyWebSocket
 {
@@ -73,12 +74,15 @@ namespace MyWebSocket
         private const byte OPCODE_MASK = 0x0F;
         private const byte START_LENGHT = 0x7F;
 
+        private static MyWebSocket.ThreadPool TPool = new MyWebSocket.ThreadPool((Environment.ProcessorCount*2)+1);
         private static Action<int, WebSocket>[] opcodeReact = new Action<int, WebSocket>[12];
 
 		private TcpClient client;
         private NetworkStream stream { get { return client.GetStream(); } }
 		private object writeLocker = new object();
         private Thread task;
+
+        private bool justStart = false;
 
 		static WebSocket()
 		{
@@ -113,21 +117,22 @@ namespace MyWebSocket
                 
 
 				StringBuilder sb = new StringBuilder();
-				do
-				{
-					int count = WS.stream.Read(buffer, 0, buffer.Length);
-					sb.Append(Encoding.UTF8.GetString(buffer, 0, count));
-					lenght -= (ulong)count;
-				} while (lenght > 0);
+
+                ulong redBytes = 0;
+                while (redBytes < lenght) {
+                    int needToRead = Math.Min(buffer.Length, (int)(lenght - redBytes));
+                    int count = WS.stream.Read(buffer, 0, needToRead);
+                    sb.Append(Encoding.UTF8.GetString(buffer, 0, count));
+                    redBytes += (ulong)count;
+                }
+
+                System.Threading.ThreadPool.QueueUserWorkItem((state) => { WS.OnMessage(sb.ToString()); });
                 
-				ThreadPool.QueueUserWorkItem((state) => {
-                    WS.OnMessage(sb.ToString());
-				});
 			};
 			opcodeReact[8] = (fin, WS) => {//приём сообщения о закрытии соединения
                 //Console.WriteLine("closed message");
-                WS.client.Close();
                 WS.task.Abort();
+                WS.client.Close();
 			};
 		}
 
@@ -135,17 +140,15 @@ namespace MyWebSocket
 		{
 			client = new TcpClient();
 			client.Connect(address, port);
-			create();
 		}
 		internal WebSocket(TcpClient client, bool encryption) : base(client, encryption)
 		{
 			this.client = client;
-			create();
 		}
 
 		public virtual void SendMessage(String message) {//отправка текстового сообщения
-            MemoryStream header = new MemoryStream(2);
             byte[] buffer = Encoding.UTF8.GetBytes(message);
+            MemoryStream header = new MemoryStream(2);
             using (BinaryWriter writer = new BinaryWriter(header)) {
                 writer.Write((byte)0x81);
                 if (buffer.Length >= 126) {
@@ -179,8 +182,8 @@ namespace MyWebSocket
 			WriteToBufferAtomic((NetworkStream obj) =>
 			{
 				obj.Write(buffer, 0, 1);
-                client.Close();
                 task.Abort();
+                client.Close();
 			});
 		}
 		public bool IsClosed() {
@@ -218,21 +221,32 @@ namespace MyWebSocket
 			}
 		}
 
-		private void create() {
+		protected void Start() {
+            if (justStart) { return; }
+
+            justStart = true;
+
 			OnOpen();
+
+            //int messageCount = 0;
+            //Console.WriteLine("create WS");
+
+            //client.Client.ReceiveTimeout = 1000;
 
             task = new Thread(() =>
             {
 				byte[] data = new byte[1];
                 int count;
                 try {
-                    while ((count = stream.Read(data, 0, 1)) > 0)
+                    while (true)
                     {//код принимающий данные из сети и решающий кто их будет обрабатывать зависит от опкода
+                        count = stream.Read(data, 0, 1);
                         int fin = (data[0] & FIN_MASK) >> 7;
                         int opcode = data[0] & OPCODE_MASK;
-                        //Console.WriteLine("first: {0}", data[0]);
+                        //Console.WriteLine("first: {0} count: {1}", data[0], messageCount++);
                         opcodeReact[opcode](fin, this);
                     }
+                    
                 }
                 catch (ThreadAbortException abrot) {
                     Console.WriteLine("abrot");

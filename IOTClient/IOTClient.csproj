@@ -39,12 +39,16 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\CommandLoad.cs" />
+    <Compile Include="Commands\CommandPerformance.cs" />
+    <Compile Include="Commands\CommandStress.cs" />
+    <Compile Include="Commands\ICommand.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FlagReceiver.cs" />
     <Compile Include="BashExecutor.cs" />
     <Compile Include="Hardware.cs" />
-    <Compile Include="ClientData.cs" />
+    <Compile Include="Commands\ClientData.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MyWebSocket\MyWebSocket.csproj">

@@ -84,15 +84,20 @@ namespace IOTServer
 		}
 
 		/*
-		* создание websocket сервера
+		 * создание websocket сервера
+         * решающего какая команда будет выполнена
 		*/
 		private static void ConfigureRRServer() {
 			//requ	{cmd, data: {}}
 			//resp	{ok: {message}}
 			//error	{error: {message}}
-            server = new RRServer(String.Format("ws://0.0.0.0:{0}", config["server_port"].GetValue<UInt16>()), (string arg1, IRRClient arg2) =>
+            server = new RRServer(String.Format("ws://0.0.0.0:{0}", config["server_port"].GetValue<UInt16>()));
+            server.onServerError += (Exception err) => {
+                Console.WriteLine("Server error: {0}", err);
+            };
+            server.onMessage += (string arg1, IRRClient arg2) =>
 			{
-				Console.WriteLine(arg1);
+				Console.WriteLine("server: input data {0}", arg1);
 				JSONParser inputData = null;
 				try {
 					inputData = new JSONParser(arg1);
@@ -102,10 +107,20 @@ namespace IOTServer
 					return;
 				}
 
-                commands.Execute(inputData["cmd"].GetValue<string>(), new ClientData(arg2, new JSONParser(inputData["data"])));
-			}, (IRRClient obj) => {
+
+                try {
+                    commands.Execute(inputData["cmd"].GetValue<string>(), new ClientData(arg2, new JSONParser(inputData["data"])));
+                }
+                catch (Exception err) {
+                    arg2.SendMessageAsync(new PartStruct()
+                        .Add("error", new PartStruct()
+                            .Add("message", err.Message)
+                        ).ToJSON());
+                }
+			};
+            server.onOpen += (IRRClient obj) => {
 				Console.WriteLine("connected ip: {0}, port {1}", obj.address, obj.port);
-			});
+			};
 		}
 
 		/*
@@ -127,13 +142,27 @@ namespace IOTServer
                     cmd.Execute(arguments[0]);
 				};
 			});
-			commands.AddCommand((c) => {
+			commands.AddCommand((c) => {//проводит стресс тестирование
                 IServerCommand cmd = new CommandStressTest(dataHolder);
 				c.Name = "stress";
 				c.Execute = (ClientData[] arguments) => {
                     cmd.Execute(arguments[0]);
 				};
 			});
+            commands.AddCommand((c) => {//проводит нагрузочное тестирование
+                IServerCommand cmd = new CommandLoadTest(dataHolder);
+                c.Name = "load";
+                c.Execute = (ClientData[] arguments) => {
+                    cmd.Execute(arguments[0]);
+                };
+            });
+            commands.AddCommand((c) => {//проводит тестирование производительности
+                IServerCommand cmd = new CommandPerformance(dataHolder);
+                c.Name = "performance";
+                c.Execute = (ClientData[] arguments) => {
+                    cmd.Execute(arguments[0]);
+                };
+            });
 		}
 	}
 

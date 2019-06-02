@@ -32,6 +32,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="JSONParserLibrary">
+      <HintPath>..\Libs\JSONParserLibrary.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -48,6 +51,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MyRandom\MyRandom.csproj">
+      <Project>{1da8ac32-90bc-421d-bb8e-9db42dfc8681}</Project>
+      <Name>MyRandom</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MyWebSocket\MyWebSocket.csproj">
       <Project>{7b65a628-2b68-4e6a-9c28-b27ff704d3dd}</Project>
       <Name>MyWebSocket</Name>

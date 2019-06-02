@@ -2,7 +2,7 @@
 using JSONParserLibrary;
 using MyWebSocket.RR;
 
-namespace IOTClient {
+namespace IOTClient.Commands {
 	public class ClientData
 	{
 		public IRRClient client { get; private set; }

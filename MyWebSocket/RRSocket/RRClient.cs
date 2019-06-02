@@ -9,22 +9,25 @@ namespace MyWebSocket.RR
 	/*
 	* представляет собой класс для работы с запросами и ответами
 	*/
+
 	public class RRClient : WebSocket, IRRClient
 	{
-		private Action<IRRClient> observer;
-		private Action<string, IRRClient> messageHandler;
-        private ConcurrentDictionary<Guid, TaskCompletionSource<string>> waitRequests = new ConcurrentDictionary<Guid, TaskCompletionSource<string>>();
+        public event IRREvent onClose;
+        private RRServer server;
+        public event error onError;
+        private ConcurrentDictionary<Guid, TaskCompletionSource<string>> waitRequests;
 
-		public RRClient(string url) : base(url) {
-			//messageHandler = null;
-		}
-		internal RRClient(TcpClient client, bool encryption, Action<string, IRRClient> onMessage) : base(client, encryption)
+		public RRClient(string url) 
+            : base(url) 
+        {
+            waitRequests = new ConcurrentDictionary<Guid, TaskCompletionSource<string>>();
+            Start();
+        }
+		internal RRClient(TcpClient client, bool encryption, RRServer server) 
+            : base(client, encryption)
 		{
-			messageHandler = onMessage;
-		}
-
-		public void AddOnCloseObserver(Action<IRRClient> observer) {
-			this.observer = observer;
+			this.server = server;
+            Start();
 		}
 
 		public override void SendMessage(string message)
@@ -40,21 +43,19 @@ namespace MyWebSocket.RR
 		{
 			TaskCompletionSource<string> tcs = new TaskCompletionSource<string>();
 			Guid id = Guid.NewGuid();
-            if (waitRequests.TryAdd(id, tcs))
-            {
+            if (waitRequests.TryAdd(id, tcs)) {
                 base.SendMessage(id.ToString() + message);
                 return tcs.Task;
             }
             else {
-                throw new Exception("can't add guid");
+                throw new Exception("can't send");
             }
 		}
 
 		protected override void OnClose() {
-			if (observer != null) {
-				observer(this);
+			if (onClose != null) {
+                onClose(this);
 			}
-			Console.WriteLine("Closed!!!");
 		}
 
 		protected override void OnError(Exception err)
@@ -72,8 +73,8 @@ namespace MyWebSocket.RR
 		{
 			Guid id = Guid.Parse(message.Substring(0, 36));
             
-            if (messageHandler != null) {
-                messageHandler(message.Substring(36), new RRClientWrapper(this, id, base.SendMessage));
+            if (server != null) {
+                server.OnMessage(message.Substring(36), new RRClientWrapper(this, id, base.SendMessage));
             }
             else {
                 TaskCompletionSource<string> awaiter;
@@ -84,9 +85,8 @@ namespace MyWebSocket.RR
                     Console.WriteLine("missed guid");
                 }
             }
-
 		}
 
 		protected override void OnOpen() {}
-	}
+    }
 }

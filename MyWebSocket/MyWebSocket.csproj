@@ -37,6 +37,7 @@
     <Compile Include="RRSocket\RRServer.cs" />
     <Compile Include="Connect.cs" />
     <Compile Include="Server.cs" />
+    <Compile Include="ThreadPool.cs" />
     <Compile Include="WebSocket.cs" />
     <Compile Include="RRSocket\IRRClient.cs" />
     <Compile Include="RRSocket\RRClientWrapper.cs" />

@@ -60,17 +60,23 @@ namespace MyWebSocket.RR
 			TaskCompletionSource<string> tcs = new TaskCompletionSource<string>();
 			tcs.SetResult("");
 			sendMessage(id.ToString() + message);
-			return tcs.Task;
-		}
-
-		public void AddOnCloseObserver(Action<IRRClient> observer)
-		{
-            original.AddOnCloseObserver(observer);
+            return tcs.Task;
 		}
 
 		public bool IsClosed()
 		{
 			return original.IsClosed();
 		}
-	}
+
+
+        public event IRREvent onClose {
+            add { original.onClose += value; }
+            remove { original.onClose -= value; }
+        }
+
+        public event error onError {
+            add { original.onError += value; }
+            remove { original.onError -= value; }
+        }
+    }
 }

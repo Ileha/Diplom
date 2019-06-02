@@ -37,6 +37,40 @@ namespace IOTServer.StatisticData {
 			return res;
 		}
 
+        public Metrics GetMetric(IPAddress client, uint sessionID, uint count)
+        {
+            return GetMetric(new SessionID(client, sessionID), count);
+        }
+
+        public Metrics GetMetric(SessionID id, uint count)
+        {
+            List<StatisticElement> statistic = Pop(id);
+            statistic.Sort((a, b) => a.CompareTo(b));
+
+            double all = statistic.Count;
+            double all_time = statistic[(int)all - 1].UnixTime - statistic[0].UnixTime;
+
+            Metrics result = new Metrics();
+
+            result.speed = double.PositiveInfinity;
+            if (all_time > 0) {
+                result.speed = ((all * 512.0d * 8.0d) / all_time) / 1000.0d; //в Мбит/c
+            }
+            result.jitter = 0;
+            result.delay = double.PositiveInfinity;
+            if (all > 0)
+            {
+                result.delay = (all_time / all) / 1000; //в секундах
+                for (int i = 1; i < all; i++)
+                {
+                    result.jitter += Math.Pow((result.delay - (statistic[i].UnixTime - statistic[i - 1].UnixTime) / 1000), 2);
+                }
+                result.jitter /= all;
+            }
+            result.missed = count - (uint)all;
+            return result;
+        }
+
 		public void AddData(IPAddress client, long bytesCount, uint sessionID) {
 			SessionID id = new SessionID(client, sessionID);
 			StatisticElement add = new StatisticElement(bytesCount);
