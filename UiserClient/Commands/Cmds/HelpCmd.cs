@@ -32,6 +32,7 @@ namespace UiserClient.Commands.Cmds
                                  "\t\tgamma -a double_num -l double_num\n" +
                                  "\t\terlang -m uint_num, -l double_num\n" +
                                  "\t\tpareto -x double_num -a double_num\n");
+			helpData.Add("perform", "start performance test on chosen clients");
         }
 
         protected override void execute(CommandData argument) {

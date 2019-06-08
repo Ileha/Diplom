@@ -10,7 +10,7 @@ namespace UiserClient.Commands.Cmds
     class PerformCmd : ICommand
     {
         public PerformCmd(CommonData data, CommandDataPattern pattern) 
-            : base(data, pattern) 
+            : base(data, pattern)
         {}
 
         protected override void execute(CommandData argument) {

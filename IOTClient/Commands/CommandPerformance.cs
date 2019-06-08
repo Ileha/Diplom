@@ -11,11 +11,14 @@ namespace IOTClient.Commands
     class CommandPerformance : ICommand
     {
         private static readonly double ticksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000d;
+		private const double T_REFERENCE_SEARCH = 8.96d;
+		private const double T_REFERENCE_SORT = 283.4812006d;
+		private const double T_REFERENCE_BINARY_SEARCH = 2.562520612d;
 
         public override void Execute(ClientData argument)
         {
             double[] times = new double[3];
-            int count = 5000;
+			int count = 5000;//128000;
             double[] testArray = new double[count];
             Stopwatch sw;
             
@@ -27,7 +30,7 @@ namespace IOTClient.Commands
 
             sw = Stopwatch.StartNew();
             BubbleSort(testArray);
-            times[1] = sw.ElapsedTicks / ticksPerMicrosecond;//сортировка
+			times[1] = sw.ElapsedTicks / ticksPerMicrosecond;//сортировка
             sw.Stop();
 
             sw.Reset();
@@ -37,7 +40,7 @@ namespace IOTClient.Commands
                     break;
                 }
             }
-            times[0] = sw.ElapsedTicks / ticksPerMicrosecond;//поиск
+			times[0] = T_REFERENCE_SEARCH/(sw.ElapsedTicks / ticksPerMicrosecond);//поиск
             sw.Stop();
 
             sw.Reset();
@@ -46,14 +49,14 @@ namespace IOTClient.Commands
             times[2] = sw.ElapsedTicks / ticksPerMicrosecond;//бинарный поиск
             sw.Stop();
 
-            times[1] = Math.Sqrt(times[1]);
-            times[2] = Math.Pow(2.0, times[2]);
+            times[1] = T_REFERENCE_SORT/Math.Sqrt(times[1]);
+            times[2] = T_REFERENCE_BINARY_SEARCH/Math.Pow(2.0, times[2]);
 
             argument.client.SendMessageAsync(new PartStruct()
                                         .Add("ok", new PartStruct()
-                                            .Add("generate", times[0])
+                                            .Add("search", times[0])
                                             .Add("sort", times[1])
-                                            .Add("search", times[2])).ToJSON());
+                                            .Add("binary search", times[2])).ToJSON());
             argument.client.Close();
         }
 
