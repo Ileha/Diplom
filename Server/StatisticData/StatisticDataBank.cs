@@ -67,7 +67,7 @@ namespace IOTServer.StatisticData {
                 }
                 result.jitter /= all;
             }
-            result.missed = count - (uint)all;
+            result.missed = 100d/count*(count - (uint)all);
             return result;
         }
 

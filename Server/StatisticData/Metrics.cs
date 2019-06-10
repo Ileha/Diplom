@@ -12,11 +12,11 @@ namespace IOTServer.StatisticData
         public double jitter;
         public double delay;
         public double speed;
-        public uint missed;
+        public double missed;
 
         public Metrics() {}
 
-        public Metrics(double jitter, double delay, double speed, uint missed)
+        public Metrics(double jitter, double delay, double speed, double missed)
         {
             this.jitter = jitter;
             this.delay = delay;
@@ -29,7 +29,7 @@ namespace IOTServer.StatisticData
                 .Add("jitter", String.Format("{0} c", jitter))
                 .Add("delay", String.Format("{0} c", delay))
                 .Add("speed", String.Format("{0} Mbit/c", speed))
-                .Add("missed", missed);
+                .Add("missed", String.Format("{0}%", missed));
         }
     }
 }

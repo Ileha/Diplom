@@ -41,7 +41,8 @@ namespace IOTServer.Commands
 
             argument.data.Data.Remove("clients");
 
-            Task<IPart>[] workers = new Task<IPart>[data.clients.Count];
+            Task<IPart>[] workers = new Task<IPart>[hid.Count];
+            Client[] selected_clients = new Client[hid.Count];
 
             string req = new PartStruct()
                 .Add("cmd", "load")
@@ -49,6 +50,7 @@ namespace IOTServer.Commands
             int index = 0;
             foreach (IPart cli in hid) {
                 Client currentClient = data.clients[cli.GetValue<string>()];
+                selected_clients[index] = currentClient;
                 workers[index] = Task.Factory.StartNew(() => {
                     return TestForSingleIotClient(currentClient, req, count);
                 });
@@ -60,7 +62,7 @@ namespace IOTServer.Commands
             Task.WaitAll(workers);
             for (int i = 0; i < workers.Length; i++)
             {
-                container.Add(workers[i].Result);
+                container.Add(new PartStruct().Add("name", selected_clients[i].ToString()).Add("result", workers[i].Result));
             }
             argument.client.SendMessageAsync(sendedMessage.ToJSON());
         }

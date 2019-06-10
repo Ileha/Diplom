@@ -57,7 +57,21 @@ namespace UiserClient.Commands.Cmds
                 .Add("data", dataToRequest);
 
             JSONParser replyData = new JSONParser(data.server.SendMessageAsync(request.ToJSON()).Result);
-            Console.WriteLine(replyData.ToJSON());
+            IPart ok = replyData["ok"];
+            IPart error = null;
+            foreach (IPart enemy in ok) {
+                Console.WriteLine(enemy.ByPath("name").GetValue<string>());
+                if (enemy.ByPathSave("result.exception", out error)) {
+                    Console.WriteLine("\t{0}", error.GetValue<string>());
+                }
+                else {
+                    Console.WriteLine("\tjitter:\t{0}", enemy.ByPath("result.jitter").GetValue<string>());
+                    Console.WriteLine("\tdelay:\t{0}", enemy.ByPath("result.delay").GetValue<string>());
+                    Console.WriteLine("\tspeed:\t{0}", enemy.ByPath("result.speed").GetValue<string>());
+                    Console.WriteLine("\tmissed:\t{0}", enemy.ByPath("result.missed").GetValue<string>());
+                }
+            }
+            //Console.WriteLine(replyData.ToJSON());
         }
     }
 }
